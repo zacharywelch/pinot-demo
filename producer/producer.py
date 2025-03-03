@@ -25,9 +25,13 @@ counter = 0
 while True:
     # Create an event with timestamp and random data
     counter += 1
+
+    # Get current timestamp in seconds since epoch (integer for Pinot)
+    timestamp_epoch = int(time.time())
+
     event = {
         'id': counter,
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': timestamp_epoch,  # Using integer timestamp in seconds
         'value': random.randint(1, 100),
         'message': f"Hello Kafka! Message #{counter}"
     }

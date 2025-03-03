@@ -48,3 +48,41 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       TOPIC_NAME: example-topic
       INTERVAL_MS: 1000
+
+  # Pinot components
+  pinot-controller:
+    image: apachepinot/pinot:0.12.1
+    container_name: pinot-controller
+    command: "StartController -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+  pinot-broker:
+    image: apachepinot/pinot:0.12.1
+    container_name: pinot-broker
+    command: "StartBroker -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    depends_on:
+      pinot-controller:
+        condition: service_started
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+  pinot-server:
+    image: apachepinot/pinot:0.12.1
+    container_name: pinot-server
+    command: "StartServer -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
+    restart: unless-stopped
+    depends_on:
+      pinot-broker:
+        condition: service_started
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
