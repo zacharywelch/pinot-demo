@@ -26,12 +26,12 @@ while True:
     # Create an event with timestamp and random data
     counter += 1
 
-    # Get current timestamp in seconds since epoch (integer for Pinot)
-    timestamp_epoch = int(time.time())
+    # Generate ISO format datetime with microsecond precision and Z suffix
+    timestamp_iso = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
     event = {
         'id': counter,
-        'timestamp': timestamp_epoch,  # Using integer timestamp in seconds
+        'timestamp': timestamp_iso,
         'value': random.randint(1, 100),
         'message': f"Hello Kafka! Message #{counter}"
     }

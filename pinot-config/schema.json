@@ -19,9 +19,9 @@
   "dateTimeFieldSpecs": [
     {
       "name": "timestamp",
-      "dataType": "INT",
-      "format": "1:SECONDS:EPOCH",
-      "granularity": "1:SECONDS"
+      "dataType": "STRING",
+      "format": "1:MILLISECONDS:TIMESTAMP",
+      "granularity": "1:MILLISECONDS"
     }
   ]
 }
