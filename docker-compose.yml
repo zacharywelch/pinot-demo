@@ -51,7 +51,7 @@ services:
 
   # Pinot components
   pinot-controller:
-    image: apachepinot/pinot:0.12.1
+    image: apachepinot/pinot:1.0.0
     container_name: pinot-controller
     command: "StartController -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
@@ -64,7 +64,7 @@ services:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
   pinot-broker:
-    image: apachepinot/pinot:0.12.1
+    image: apachepinot/pinot:1.0.0
     container_name: pinot-broker
     command: "StartBroker -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
@@ -77,7 +77,7 @@ services:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
   pinot-server:
-    image: apachepinot/pinot:0.12.1
+    image: apachepinot/pinot:1.0.0
     container_name: pinot-server
     command: "StartServer -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
@@ -86,3 +86,19 @@ services:
         condition: service_started
     environment:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+  cube:
+    image: cubejs/cube:latest
+    container_name: cube
+    ports:
+      - "4000:4000"
+    depends_on:
+      - pinot-broker
+    environment:
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_DB_TYPE: "pinot"
+      CUBEJS_DB_HOST: "http://pinot-broker"
+      CUBEJS_DB_PORT: "8099"
+      CUBEJS_API_SECRET: "simple-secret"
+    volumes:
+      - ./cube:/cube/conf
