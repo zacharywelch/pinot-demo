@@ -51,7 +51,7 @@ services:
 
   # Pinot components
   pinot-controller:
-    image: apachepinot/pinot:1.0.0
+    image: apachepinot/pinot:latest
     container_name: pinot-controller
     command: "StartController -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
@@ -64,7 +64,7 @@ services:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
   pinot-broker:
-    image: apachepinot/pinot:1.0.0
+    image: apachepinot/pinot:latest
     container_name: pinot-broker
     command: "StartBroker -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
@@ -77,7 +77,7 @@ services:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
   pinot-server:
-    image: apachepinot/pinot:1.0.0
+    image: apachepinot/pinot:latest
     container_name: pinot-server
     command: "StartServer -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
     restart: unless-stopped
