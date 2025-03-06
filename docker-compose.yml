@@ -1,37 +1,43 @@
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
+    image: bitnami/zookeeper:latest
     container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      test: ["CMD", "zkServer.sh", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   kafka:
-    image: confluentinc/cp-kafka:7.3.0
+    image: bitnami/kafka:latest
     container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+
+      # Configure listeners for both plain and authenticated connections
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,SASL_PLAINTEXT://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,SASL_PLAINTEXT://kafka:9094
+
+      # SASL configuration
+      - KAFKA_CFG_SASL_ENABLED_MECHANISMS=PLAIN
+      - KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL=PLAIN
+
+      # User configuration - this defines which users can authenticate
+      - KAFKA_CFG_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="admin-secret" user_admin="admin-secret" user_producer="producer-secret" user_pinot="pinot-secret";
     depends_on:
       zookeeper:
         condition: service_healthy
-    ports:
-      - "9092:9092"
-      - "29092:29092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,9 +49,10 @@ services:
       kafka:
         condition: service_healthy
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092  # Use the plaintext port instead
       TOPIC_NAME: example-topic
       INTERVAL_MS: 1000
+      KAFKA_SECURITY_PROTOCOL: PLAINTEXT  # Simple plaintext connection
 
   # Pinot components
   pinot-controller:
@@ -84,6 +91,21 @@ services:
         condition: service_started
     environment:
       JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      KAFKA_USERNAME: pinot
+      KAFKA_PASSWORD: pinot-secret
+
+  setup:
+    image: bitnami/kafka:latest
+    container_name: setup
+    depends_on:
+      kafka:
+        condition: service_healthy
+      pinot-controller:
+        condition: service_started
+    volumes:
+      - ./pinot-config:/pinot-config
+      - ./setup-pinot.sh:/setup-pinot.sh
+    command: "bash /setup-pinot.sh"
 
   cube:
     image: cubejs/cube:latest
