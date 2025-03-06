@@ -67,9 +67,9 @@ print_message "$GREEN" "Schema added successfully!"
 print_message "$YELLOW" "Adding the table..."
 
 # Check if table already exists and delete it if needed
-if curl -s http://localhost:9000/tables/events | grep -q "events"; then
-  print_message "$YELLOW" "Table 'events' already exists. Deleting it first..."
-  curl -s -X DELETE http://localhost:9000/tables/events
+if curl -s http://localhost:9000/tables/orders | grep -q "orders"; then
+  print_message "$YELLOW" "Table 'orders' already exists. Deleting it first..."
+  curl -s -X DELETE http://localhost:9000/tables/orders
   sleep 5  # Wait for deletion to complete
 fi
 
@@ -97,13 +97,13 @@ print_message "$YELLOW" "Verifying the table was created..."
 
 # Try 5 times since table creation can take time
 for i in {1..5}; do
-  if curl -s http://localhost:9000/tables/events | grep -q "events"; then
-    print_message "$GREEN" "Table 'events' verified!"
+  if curl -s http://localhost:9000/tables/orders | grep -q "orders"; then
+    print_message "$GREEN" "Table 'orders' verified!"
     break
   fi
 
   if [ $i -eq 5 ]; then
-    print_message "$RED" "Could not verify table 'events' was created."
+    print_message "$RED" "Could not verify table 'orders' was created."
     exit 1
   fi
 
@@ -117,3 +117,4 @@ print_message "$GREEN" "Pinot setup completed successfully!"
 print_message "$GREEN" "========================================="
 echo -e "You can access Pinot at: ${YELLOW}http://localhost:9000${NC}"
 echo -e "Run queries at: ${YELLOW}http://localhost:9000/query${NC}"
+echo -e "Visualize with Cube at: ${YELLOW}http://localhost:4000${NC}"

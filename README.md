@@ -1,6 +1,6 @@
 # Real-Time Analytics Pipeline with Kafka, Apache Pinot and Cube
 
-This project sets up a real-time analytics pipeline using Apache Kafka as the message queue, Apache Pinot as the real-time analytics database, and Cube as the analytics API platform. It includes a simple event producer that generates random data events with ISO timestamps and publishes them to Kafka, which are then consumed by Pinot for real-time analysis and made available through Cube for visualization and exploration.
+This project sets up a real-time analytics pipeline using Apache Kafka as the message queue, Apache Pinot as the real-time analytics database, and Cube as the analytics API platform. It includes a simple order producer that generates order events with nested JSON structure and publishes them to Kafka, which are then consumed by Pinot for real-time analysis and made available through Cube for visualization and exploration.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ The pipeline consists of:
 
 - **Zookeeper**: For coordination between Kafka and Pinot components
 - **Kafka**: Message broker for handling event streams
-- **Event Producer**: Python application that generates random events with ISO timestamps
+- **Event Producer**: Python application that generates order events
 - **Apache Pinot**: Real-time analytics database with components:
   - Controller: Manages the Pinot cluster
   - Broker: Handles queries
@@ -56,20 +56,18 @@ Access the Pinot UI at http://localhost:9000 and navigate to the Query Console t
 
 Example query:
 ```sql
-SELECT COUNT(*) FROM events
+SELECT COUNT(*) FROM orders
 ```
-
 ![Data Explorer](images/data-explorer.png)
 
 ### 6. Explore with Cube
 
 Access the Cube Playground at http://localhost:4000 to build and visualize queries.
-
 In the Cube Playground, you can build queries using the visual query builder:
 
-1. Select the `Events` cube
-2. Add measures like `Events.count` or `Events.avgValue`
-3. Add dimensions like `Events.timestamp`
+1. Select the `Orders` cube
+2. Add measures like `Orders.count` or `Orders.totalRevenue`
+3. Add dimensions like `Orders.paymentMethod`
 4. Run the query and visualize the results
 
 ![Cube](images/cube.png)
@@ -119,17 +117,22 @@ docker-compose up -d --build
     ├── cube.js                 # Main Cube configuration
     └── model/                  # Data models directory
         └── cubes/              # Cube definitions
-            └── Events.js       # Events cube definition
+            └── Orders.js       # Orders cube definition
 ```
 
 ## Schema Definition
 
-The `events` table schema includes:
+The `orders` table schema includes:
 
-- `id` (INT): Unique identifier for each event
-- `timestamp` (STRING): ISO format timestamp (e.g., "2025-03-03T18:00:00.000000Z")
-- `value` (INT): Random value between 1-100
-- `message` (STRING): Text message for the event
+- `event_id` (STRING): Unique identifier for each event
+- `tenant_id` (INT): Tenant identifier for the order
+- `event_at` (TIMESTAMP): ISO format timestamp
+- `event_type` (STRING): Type of order event
+- `order_id` (STRING): Identifier for the order
+- `order_total` (DOUBLE): Total value of the order
+- `payment_method` (STRING): Method used for payment
+- `customer_id` (LONG): Customer identifier
+- `customer_email` (STRING): Customer's email address
 
 ## Customizing
 
@@ -140,7 +143,7 @@ To modify the event data structure or generation frequency:
 1. Edit `producer/producer.py`
 2. Update schema in `pinot-config/schema.json`
 3. Update table configuration in `pinot-config/table.json`
-4. Update Cube model in `cube/model/cubes/Events.js`
+4. Update Cube model in `cube/model/cubes/Orders.js`
 5. Rebuild and restart:
    ```bash
    docker-compose down -v

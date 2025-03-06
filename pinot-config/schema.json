@@ -1,24 +1,40 @@
 {
-  "schemaName": "events",
+  "schemaName": "orders",
   "dimensionFieldSpecs": [
     {
-      "name": "id",
+      "name": "team_id",
       "dataType": "INT"
     },
     {
-      "name": "message",
+      "name": "order_id",
+      "dataType": "STRING"
+    },
+    {
+      "name": "payment_method",
+      "dataType": "STRING"
+    },
+    {
+      "name": "customer_id",
+      "dataType": "LONG"
+    },
+    {
+      "name": "customer_email",
+      "dataType": "STRING"
+    },
+    {
+      "name": "event_id",
       "dataType": "STRING"
     }
   ],
   "metricFieldSpecs": [
     {
-      "name": "value",
-      "dataType": "INT"
+      "name": "order_total",
+      "dataType": "DOUBLE"
     }
   ],
   "dateTimeFieldSpecs": [
     {
-      "name": "timestamp",
+      "name": "event_at",
       "dataType": "STRING",
       "format": "1:MILLISECONDS:TIMESTAMP",
       "granularity": "1:MILLISECONDS"

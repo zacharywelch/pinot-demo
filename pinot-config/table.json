@@ -1,13 +1,14 @@
 {
-  "tableName": "events",
+  "tableName": "orders",
   "tableType": "REALTIME",
   "segmentsConfig": {
-    "timeColumnName": "timestamp",
-    "schemaName": "events",
-    "replication": "1",
-    "replicasPerPartition": "1"
+    "timeColumnName": "event_at",
+    "replication": "1"
   },
-  "tenants": {},
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
   "tableIndexConfig": {
     "loadMode": "MMAP",
     "streamConfigs": {
@@ -17,13 +18,48 @@
       "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
       "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
       "stream.kafka.broker.list": "kafka:9092",
-      "stream.kafka.consumer.prop.auto.offset.reset": "smallest",
-      "realtime.segment.flush.threshold.time": "3600000",
-      "realtime.segment.flush.threshold.size": "0",
-      "realtime.segment.flush.threshold.rows": "50000"
+      "stream.kafka.decoder.prop.jsontypeToRecord": true,
+      "stream.kafka.decoder.prop.format": "JSON",
+      "stream.kafka.consumer.prop.auto.offset.reset": "smallest"
     }
   },
-  "metadata": {
-    "customConfigs": {}
+  "ingestionConfig": {
+    "transformConfigs": [
+      {
+        "columnName": "team_id",
+        "transformFunction": "tenant_id"
+      },
+      {
+        "columnName": "order_id",
+        "transformFunction": "JSONPATH(object, '$.id')"
+      },
+      {
+        "columnName": "order_total",
+        "transformFunction": "JSONPATH(object, '$.total')"
+      },
+      {
+        "columnName": "payment_method",
+        "transformFunction": "JSONPATH(object, '$.payment_method')"
+      },
+      {
+        "columnName": "customer_id",
+        "transformFunction": "JSONPATH(object, '$.customer.id')"
+      },
+      {
+        "columnName": "customer_email",
+        "transformFunction": "JSONPATH(object, '$.customer.email')"
+      },
+      {
+        "columnName": "event_at",
+        "transformFunction": "created_at"
+      },
+      {
+        "columnName": "event_id",
+        "transformFunction": "id"
+      }
+    ],
+    "filterConfig": {
+      "filterFunction": "strcmp(event_type, 'order.created') <> 0"
+    }
   }
 }
