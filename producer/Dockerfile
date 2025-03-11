@@ -1,13 +1,13 @@
-FROM python:3.11-slim
+FROM ruby:3.1-slim
 
 WORKDIR /app
 
 # Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
 
 # Copy producer script
-COPY producer.py .
+COPY producer.rb .
 
 # Run the producer script
-CMD ["python", "producer.py"]
+CMD ["ruby", "producer.rb"]

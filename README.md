@@ -10,7 +10,7 @@ The pipeline consists of:
 
 - **Zookeeper**: For coordination between Kafka and Pinot components
 - **Kafka**: Message broker for handling event streams
-- **Event Producer**: Python application that generates order events
+- **Event Producer**: Ruby application that generates random events with ISO timestamps
 - **Apache Pinot**: Real-time analytics database with components:
   - Controller: Manages the Pinot cluster
   - Broker: Handles queries
@@ -33,8 +33,8 @@ cd pinot-demo
 
 ```bash
 # Build and start all services
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 ```
 
 ### 3. Set up Pinot
@@ -97,8 +97,8 @@ docker logs cubejs
 
 Always rebuild containers after making code changes:
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 ```
 
 ## Project Structure
@@ -108,8 +108,9 @@ docker-compose up -d --build
 ├── setup-pinot.sh              # Script to set up Pinot schema and table
 ├── producer/                   # Event producer application
 │   ├── Dockerfile              # Container definition for producer
-│   ├── requirements.txt        # Python dependencies
-│   └── producer.py             # Python event generator code
+│   ├── Gemfile                 # Ruby dependencies
+│   ├── Gemfile.lock            # Locked Ruby dependencies
+│   └── producer.rb             # Ruby event generator code
 ├── pinot-config/               # Pinot configuration files
 │   ├── schema.json             # Defines the data structure
 │   └── table.json              # Defines how data is stored and queried
@@ -124,15 +125,19 @@ docker-compose up -d --build
 
 The `orders` table schema includes:
 
-- `event_id` (STRING): Unique identifier for each event
-- `tenant_id` (INT): Tenant identifier for the order
-- `event_at` (TIMESTAMP): ISO format timestamp
-- `event_type` (STRING): Type of order event
-- `order_id` (STRING): Identifier for the order
-- `order_total` (DOUBLE): Total value of the order
-- `payment_method` (STRING): Method used for payment
-- `customer_id` (LONG): Customer identifier
-- `customer_email` (STRING): Customer's email address
+### Dimension Fields
+- `team_id` (INT): Identifier for the tenant/team
+- `order_id` (STRING): Unique identifier for each order
+- `payment_method` (STRING): Method of payment used
+- `customer_id` (LONG): Unique identifier for the customer
+- `customer_email` (STRING): Email address of the customer
+- `event_id` (STRING): Unique identifier for the event
+
+### Metric Fields
+- `order_total` (DOUBLE): Total monetary value of the order
+
+### DateTime Fields
+- `event_at` (STRING): Timestamp when the event occurred, formatted as milliseconds since epoch
 
 ## Customizing
 
@@ -140,14 +145,14 @@ The `orders` table schema includes:
 
 To modify the event data structure or generation frequency:
 
-1. Edit `producer/producer.py`
+1. Edit `producer/producer.rb`
 2. Update schema in `pinot-config/schema.json`
 3. Update table configuration in `pinot-config/table.json`
 4. Update Cube model in `cube/model/cubes/Orders.js`
 5. Rebuild and restart:
    ```bash
-   docker-compose down -v
-   docker-compose up -d --build
+   docker compose down -v
+   docker compose up -d --build
    ./setup-pinot.sh
    ```
 
@@ -158,3 +163,4 @@ To modify the event data structure or generation frequency:
 - [Cube Documentation](https://cube.dev/docs)
 - [Pinot Connector for Cube](https://cube.dev/docs/product/configuration/data-sources/pinot)
 - [Real-Time Analytics with Pinot](https://docs.pinot.apache.org/basics/components/table#real-time-table)
+- [Ruby Kafka Documentation](https://github.com/zendesk/ruby-kafka)
