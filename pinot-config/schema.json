@@ -35,7 +35,7 @@
   "dateTimeFieldSpecs": [
     {
       "name": "event_at",
-      "dataType": "STRING",
+      "dataType": "TIMESTAMP",
       "format": "1:MILLISECONDS:TIMESTAMP",
       "granularity": "1:MILLISECONDS"
     }
