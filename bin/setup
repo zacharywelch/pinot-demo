@@ -40,74 +40,85 @@ print_message "$GREEN" "Pinot is running!"
 print_message "$YELLOW" "Giving Pinot a moment to fully initialize..."
 sleep 10
 
-# Step 2: Add the schema
-print_message "$YELLOW" "Adding the schema..."
+# Step 2: Add schemas from pinot/schemas directory
+print_message "$YELLOW" "Adding schemas..."
 
-# Send schema file to Pinot
-schema_response=$(curl -s -w "\n%{http_code}" -X POST \
-  -H "Content-Type: application/json" \
-  -d @pinot-config/schema.json \
-  http://localhost:9000/schemas)
+for schema_file in pinot/schemas/*.json; do
+  print_message "$YELLOW" "Processing schema file: $schema_file"
 
-# Get the response body and status code
-schema_body=$(echo "$schema_response" | head -n 1)
-schema_status=$(echo "$schema_response" | tail -n 1)
+  # Send schema file to Pinot
+  schema_response=$(curl -s -w "\n%{http_code}" -X POST \
+    -H "Content-Type: application/json" \
+    -d @"$schema_file" \
+    http://localhost:9000/schemas)
 
-# Check if the request was successful
-if [ "$schema_status" -ne 200 ]; then
-  print_message "$RED" "Failed to add schema. Status code: $schema_status"
-  print_message "$RED" "Response: $schema_body"
-  exit 1
-fi
+  # Get the response body and status code
+  schema_body=$(echo "$schema_response" | head -n 1)
+  schema_status=$(echo "$schema_response" | tail -n 1)
 
-print_message "$GREEN" "Schema added successfully!"
-
-# Step 3: Add the table
-print_message "$YELLOW" "Adding the table..."
-
-# Check if table already exists and delete it if needed
-if curl -s http://localhost:9000/tables/orders | grep -q "orders"; then
-  print_message "$YELLOW" "Table 'orders' already exists. Deleting it first..."
-  curl -s -X DELETE http://localhost:9000/tables/orders
-  sleep 5  # Wait for deletion to complete
-fi
-
-# Send table file to Pinot
-table_response=$(curl -s -w "\n%{http_code}" -X POST \
-  -H "Content-Type: application/json" \
-  -d @pinot-config/table.json \
-  http://localhost:9000/tables)
-
-# Get the response body and status code
-table_body=$(echo "$table_response" | head -n 1)
-table_status=$(echo "$table_response" | tail -n 1)
-
-# Check if the request was successful
-if [ "$table_status" -ne 200 ]; then
-  print_message "$RED" "Failed to add table. Status code: $table_status"
-  print_message "$RED" "Response: $table_body"
-  exit 1
-fi
-
-print_message "$GREEN" "Table added successfully!"
-
-# Step 4: Make sure the table was actually created
-print_message "$YELLOW" "Verifying the table was created..."
-
-# Try 5 times since table creation can take time
-for i in {1..5}; do
-  if curl -s http://localhost:9000/tables/orders | grep -q "orders"; then
-    print_message "$GREEN" "Table 'orders' verified!"
-    break
-  fi
-
-  if [ $i -eq 5 ]; then
-    print_message "$RED" "Could not verify table 'orders' was created."
+  # Check if the request was successful
+  if [ "$schema_status" -ne 200 ]; then
+    print_message "$RED" "Failed to add schema. Status code: $schema_status"
+    print_message "$RED" "Response: $schema_body"
     exit 1
   fi
 
-  echo "Attempt $i: Table not ready yet, waiting..."
-  sleep 5
+  print_message "$GREEN" "Schema added successfully!"
+done
+
+# Step 3: Add tables from pinot/tables directory
+print_message "$YELLOW" "Adding tables..."
+
+for table_file in pinot/tables/*.json; do
+  print_message "$YELLOW" "Processing table file: $table_file"
+
+  # Extract table name from file
+  table_name=$(grep -o '"tableName":[^,}]*' "$table_file" | cut -d'"' -f4)
+
+  # Check if table already exists and delete it if needed
+  if curl -s http://localhost:9000/tables/$table_name | grep -q "$table_name"; then
+    print_message "$YELLOW" "Table '$table_name' already exists. Deleting it first..."
+    curl -s -X DELETE http://localhost:9000/tables/$table_name
+    sleep 5  # Wait for deletion to complete
+  fi
+
+  # Send table file to Pinot
+  table_response=$(curl -s -w "\n%{http_code}" -X POST \
+    -H "Content-Type: application/json" \
+    -d @"$table_file" \
+    http://localhost:9000/tables)
+
+  # Get the response body and status code
+  table_body=$(echo "$table_response" | head -n 1)
+  table_status=$(echo "$table_response" | tail -n 1)
+
+  # Check if the request was successful
+  if [ "$table_status" -ne 200 ]; then
+    print_message "$RED" "Failed to add table. Status code: $table_status"
+    print_message "$RED" "Response: $table_body"
+    exit 1
+  fi
+
+  print_message "$GREEN" "Table added successfully!"
+
+  # Step 4: Make sure the table was actually created
+  print_message "$YELLOW" "Verifying the table was created..."
+
+  # Try 5 times since table creation can take time
+  for i in {1..5}; do
+    if curl -s http://localhost:9000/tables/$table_name | grep -q "$table_name"; then
+      print_message "$GREEN" "Table '$table_name' verified!"
+      break
+    fi
+
+    if [ $i -eq 5 ]; then
+      print_message "$RED" "Could not verify table '$table_name' was created."
+      exit 1
+    fi
+
+    echo "Attempt $i: Table not ready yet, waiting..."
+    sleep 5
+  done
 done
 
 # All done!

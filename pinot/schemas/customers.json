@@ -1,0 +1,30 @@
+{
+  "schemaName": "customers",
+  "dimensionFieldSpecs": [
+    {
+      "name": "team_id",
+      "dataType": "INT"
+    },
+    {
+      "name": "customer_id",
+      "dataType": "LONG"
+    },
+    {
+      "name": "email",
+      "dataType": "STRING"
+    },
+    {
+      "name": "event_id",
+      "dataType": "STRING"
+    }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "event_at",
+      "dataType": "TIMESTAMP",
+      "format": "1:MILLISECONDS:TIMESTAMP",
+      "granularity": "1:MILLISECONDS"
+    }
+  ],
+  "primaryKeyColumns": ["customer_id"]
+}

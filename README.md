@@ -1,6 +1,6 @@
 # Real-Time Analytics Pipeline with Kafka, Apache Pinot and Cube
 
-This project sets up a real-time analytics pipeline using Apache Kafka as the message queue, Apache Pinot as the real-time analytics database, and Cube as the analytics API platform. It includes a simple order producer that generates order events with nested JSON structure and publishes them to Kafka, which are then consumed by Pinot for real-time analysis and made available through Cube for visualization and exploration.
+This project sets up a real-time analytics pipeline using Apache Kafka as the message queue, Apache Pinot as the real-time analytics database, and Cube as the analytics API platform. It includes event producers that generate order and customer events with nested JSON structure and publishes them to Kafka, which are then consumed by Pinot for real-time analysis and made available through Cube for visualization and exploration.
 
 ## Architecture
 
@@ -15,6 +15,9 @@ The pipeline consists of:
   - Controller: Manages the Pinot cluster
   - Broker: Handles queries
   - Server: Stores and processes data
+  - Two table types:
+    - Append-only tables (orders)
+    - Upsert tables (customers)
 - **Cube**: Semantic layer platform that provides:
   - Data modeling layer
   - Analytics API
@@ -170,21 +173,29 @@ rake restart
 │   ├── Gemfile                # Ruby dependencies
 │   ├── Gemfile.lock           # Locked Ruby dependencies
 │   └── producer.rb            # Ruby event generator code
-├── pinot-config/              # Pinot configuration files
-│   ├── schema.json            # Defines the data structure
-│   └── table.json             # Defines how data is stored and queried
+├── pinot/                     # Pinot configuration files
+│   ├── schemas/               # Schema definition files
+│   │   ├── orders.json        # Orders table schema
+│   │   └── customers.json     # Customers table schema
+│   └── tables/                # Table configuration files
+│       ├── orders.json        # Orders table config
+│       └── customers.json     # Customers table config with upsert
 └── cube/                      # Cube configuration files
     ├── cube.js                # Main Cube configuration
     └── model/                 # Data models directory
         └── cubes/             # Cube definitions
-            └── Orders.js      # Orders cube definition
+            ├── Orders.js      # Orders cube with customer relationship
+            └── Customers.js   # Customers cube definition
 ```
 
 ## Schema Definition
 
+The project includes two main tables:
+
+### Orders Table (Append-Only)
 The `orders` table schema includes:
 
-### Dimension Fields
+#### Dimension Fields
 - `team_id` (INT): Identifier for the tenant/team
 - `order_id` (STRING): Unique identifier for each order
 - `payment_method` (STRING): Method of payment used
@@ -192,26 +203,25 @@ The `orders` table schema includes:
 - `customer_email` (STRING): Email address of the customer
 - `event_id` (STRING): Unique identifier for the event
 
-### Metric Fields
+#### Metric Fields
 - `order_total` (DOUBLE): Total monetary value of the order
 
-### DateTime Fields
+#### DateTime Fields
 - `event_at` (TIMESTAMP): Timestamp when the event occurred, stored in ISO format (e.g., "2023-03-15T14:30:45.123Z")
 
-## Customizing
+### Customers Table (Upsert-Enabled)
+The `customers` table schema includes:
 
-### Changing Event Generation
+#### Dimension Fields
+- `team_id` (INT): Identifier for the tenant/team
+- `customer_id` (LONG): Unique identifier for the customer (Primary Key)
+- `email` (STRING): Customer's email address
+- `event_id` (STRING): Unique identifier for the event
 
-To modify the event data structure or generation frequency:
+#### DateTime Fields
+- `event_at` (TIMESTAMP): Timestamp when the event occurred
 
-1. Edit `producer/producer.rb`
-2. Update schema in `pinot-config/schema.json`
-3. Update table configuration in `pinot-config/table.json`
-4. Update Cube model in `cube/model/cubes/Orders.js`
-5. Rebuild and restart:
-   ```bash
-   rake restart
-   ```
+The customers table uses Pinot's upsert feature which allows updating existing records based on the primary key. This enables maintaining the current state of customer data while preserving historical information.
 
 ## Further Resources
 

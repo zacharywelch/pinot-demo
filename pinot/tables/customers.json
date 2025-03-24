@@ -1,20 +1,24 @@
 {
-  "tableName": "orders",
+  "tableName": "customers",
   "tableType": "REALTIME",
   "segmentsConfig": {
     "timeColumnName": "event_at",
-    "replication": "1"
+    "replication": "1",
+    "schemaName": "customers"
   },
   "tenants": {
     "broker": "DefaultTenant",
     "server": "DefaultTenant"
+  },
+  "routing": {
+    "instanceSelectorType": "strictReplicaGroup"
   },
   "tableIndexConfig": {
     "loadMode": "MMAP",
     "streamConfigs": {
       "streamType": "kafka",
       "stream.kafka.consumer.type": "simple",
-      "stream.kafka.topic.name": "example-topic",
+      "stream.kafka.topic.name": "customers-topic",
       "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
       "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
       "stream.kafka.broker.list": "kafka:9092",
@@ -26,28 +30,16 @@
   "ingestionConfig": {
     "transformConfigs": [
       {
+        "columnName": "customer_id",
+        "transformFunction": "JSONPATH(object, '$.id')"
+      },
+      {
         "columnName": "team_id",
         "transformFunction": "tenant_id"
       },
       {
-        "columnName": "order_id",
-        "transformFunction": "JSONPATH(object, '$.id')"
-      },
-      {
-        "columnName": "order_total",
-        "transformFunction": "JSONPATH(object, '$.total')"
-      },
-      {
-        "columnName": "payment_method",
-        "transformFunction": "JSONPATH(object, '$.payment_method')"
-      },
-      {
-        "columnName": "customer_id",
-        "transformFunction": "JSONPATH(object, '$.customer.id')"
-      },
-      {
-        "columnName": "customer_email",
-        "transformFunction": "JSONPATH(object, '$.customer.email')"
+        "columnName": "email",
+        "transformFunction": "JSONPATH(object, '$.email')"
       },
       {
         "columnName": "event_at",
@@ -59,7 +51,16 @@
       }
     ],
     "filterConfig": {
-      "filterFunction": "strcmp(event_type, 'order.created') <> 0"
+      "filterFunction": "strcmp(event_type, 'customer.updated') <> 0"
+    }
+  },
+  "upsertConfig": {
+    "mode": "FULL",
+    "primaryKeyColumns": ["customer_id"]
+  },
+  "metadata": {
+    "customConfigs": {
+      "primaryKeyColumns": "customer_id"
     }
   }
 }

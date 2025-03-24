@@ -44,7 +44,8 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      TOPIC_NAME: example-topic
+      ORDERS_TOPIC: orders-topic
+      CUSTOMERS_TOPIC: customers-topic
       INTERVAL_MS: 1000
 
   # Pinot components

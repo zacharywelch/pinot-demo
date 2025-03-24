@@ -1,6 +1,13 @@
 cube(`Orders`, {
   sql_table: `orders`,
 
+  joins: {
+    Customers: {
+      relationship: `belongsTo`,
+      sql: `${CUBE}.customer_id = ${Customers}.customer_id`
+    }
+  },
+
   measures: {
     count: {
       type: `count`
@@ -21,7 +28,8 @@ cube(`Orders`, {
 
     orderId: {
       sql: `order_id`,
-      type: `string`
+      type: `string`,
+      primaryKey: true
     },
 
     paymentMethod: {
