@@ -1,6 +1,6 @@
-# Real-Time Analytics Pipeline with Kafka, Apache Pinot and Cube
+# Real-Time Analytics Demo
 
-This project sets up a real-time analytics pipeline using Apache Kafka as the message queue, Apache Pinot as the real-time analytics database, and Cube as the analytics API platform. It includes event producers that generate order and customer events with nested JSON structure and publishes them to Kafka, which are then consumed by Pinot for real-time analysis and made available through Cube for visualization and exploration.
+Learn to build production-ready real-time analytics with Pinot, Kafka, and Cube.
 
 ## Architecture
 
@@ -32,13 +32,7 @@ git clone git@github.com:zacharywelch/pinot-demo.git
 cd pinot-demo
 ```
 
-### 2. Make sure scripts are executable
-
-```bash
-chmod +x bin/*
-```
-
-### 3. Start the services
+### 2. Start the services
 
 You can use Rake tasks or directly use the bin scripts:
 
@@ -52,7 +46,7 @@ rake setup  # Set up Pinot schema and table
 ./bin/setup
 ```
 
-### 4. Verify data is being produced
+### 3. Verify data is being produced
 
 ```bash
 # View the logs of the event producer
@@ -60,7 +54,7 @@ docker logs -f event-producer
 # Press Ctrl+C after a few seconds
 ```
 
-### 5. Verify the setup
+### 4. Verify the setup
 
 Access the Pinot UI at http://localhost:9000 and navigate to the Query Console to run some queries.
 
@@ -70,7 +64,7 @@ SELECT COUNT(*) FROM orders
 ```
 ![Data Explorer](images/data-explorer.png)
 
-### 6. Explore with Cube
+### 5. Explore with Cube
 
 Access the Cube Playground at http://localhost:4000 to build and visualize queries.
 In the Cube Playground, you can build queries using the visual query builder:
