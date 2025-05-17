@@ -1,4 +1,4 @@
-# 📊 Real-Time Analytics Pipeline
+# 📊 Real-Time Analytics
 
 Learn real-time analytics with Kafka, Pinot, and Cube.
 
@@ -49,9 +49,9 @@ docker logs -f event-producer
 ```
 
 4. Access the services:
-   - Pinot UI: http://localhost:9000
-   - Cube Playground: http://localhost:4000
-   - Analytics Chatbot: http://localhost:8501
+- Pinot UI: http://localhost:9000
+- Cube Playground: http://localhost:4000
+- Analytics Chatbot: http://localhost:8501
 
 ## 🛠️ Available Commands
 
@@ -113,6 +113,8 @@ Streamlit application that provides natural language analytics:
 - Automatically translates to Cube queries
 - Visualizes query results
 - Uses OpenAI and LangChain for NLP
+
+https://github.com/user-attachments/assets/4311bb10-4487-4ba7-9db3-44998ef851be
 
 To use the chatbot with advanced language capabilities:
 1. Set up an OpenAI API key:
