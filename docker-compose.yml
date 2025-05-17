@@ -2,26 +2,24 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
+    ports:
+      - 2181:2181
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "2181"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - 9092:9092
+      - 29092:29092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -30,74 +28,99 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "9092"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   event-producer:
     build: ./producer
     container_name: event-producer
-    depends_on:
-      kafka:
-        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       ORDERS_TOPIC: orders-topic
       CUSTOMERS_TOPIC: customers-topic
       INTERVAL_MS: 1000
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: on-failure
 
   # Pinot components
   pinot-controller:
     image: apachepinot/pinot:latest
     container_name: pinot-controller
     command: "StartController -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
-    restart: unless-stopped
     ports:
-      - "9000:9000"
+      - 9000:9000
+    environment:
+      JAVA_OPTS: "-Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     depends_on:
       zookeeper:
         condition: service_healthy
-    environment:
-      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   pinot-broker:
     image: apachepinot/pinot:latest
     container_name: pinot-broker
     command: "StartBroker -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
-    restart: unless-stopped
     ports:
-      - "8099:8099"
+      - 8099:8099
+    environment:
+      JAVA_OPTS: "-Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     depends_on:
       pinot-controller:
         condition: service_started
-    environment:
-      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   pinot-server:
     image: apachepinot/pinot:latest
     container_name: pinot-server
     command: "StartServer -zkAddress zookeeper:2181 -clusterName pinot-kafka-demo"
-    restart: unless-stopped
+    environment:
+      JAVA_OPTS: "-Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     depends_on:
       pinot-broker:
         condition: service_started
-    environment:
-      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      
   cube:
     image: cubejs/cube:latest
     container_name: cube
     ports:
-      - "4000:4000"
-    depends_on:
-      - pinot-broker
+      - 4000:4000
+    volumes:
+      - ./cube:/cube/conf
     environment:
       CUBEJS_DEV_MODE: "true"
       CUBEJS_DB_TYPE: "pinot"
       CUBEJS_DB_HOST: "http://pinot-broker"
       CUBEJS_DB_PORT: "8099"
       CUBEJS_API_SECRET: "simple-secret"
-    volumes:
-      - ./cube:/cube/conf
+    depends_on:
+      pinot-broker:
+        condition: service_started
+    restart: on-failure

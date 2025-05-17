@@ -17,6 +17,6 @@ function print_message() {
 }
 
 print_message "yellow" "Building and starting all services..."
-docker compose up -d --build || { print_message "red" "Failed to start containers"; exit 1; }
+docker-compose up -d --build || { print_message "red" "Failed to start containers"; exit 1; }
 
 print_message "green" "Services started successfully"
