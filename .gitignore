@@ -5,3 +5,5 @@
 /tmp/
 cube/.cubestore
 .env
+venv/
+vectorstore.pkl
